@@ -1,0 +1,23 @@
+FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    wget git build-essential cmake clinfo \
+    ocl-icd-libopencl1 ocl-icd-opencl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка NVIDIA OpenCL driver (550)
+RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/libnvidia-compute-550_550.163.01-0ubuntu1_amd64.deb && \
+    dpkg-deb -x libnvidia-compute-550_550.163.01-0ubuntu1_amd64.deb /tmp/nvidia && \
+    cp -r /tmp/nvidia/* / && \
+    rm -rf /tmp/nvidia libnvidia-compute-550_550.163.01-0ubuntu1_amd64.deb && \
+    ldconfig
+
+# Сборка hashcat из GitHub
+RUN git clone https://github.com/hashcat/hashcat.git /hashcat && \
+    cd /hashcat && make -j
+
+WORKDIR /hashcat
+
+CMD ["./hashcat", "-I"]
